@@ -13,6 +13,7 @@ import {
   Sparkles,
   MapPin,
   ChevronLeft,
+  Globe,
 } from 'lucide-react';
 import {
   DestinationProposal,
@@ -20,6 +21,7 @@ import {
   TripPreferences,
 } from '../types/travel';
 import { formatPrice } from '../services/localStorageDb';
+import { getCountryForOriginCity, getCountryByCountryName } from '../services/departureData';
 
 interface TabFlightConfirmationProps {
   destination: DestinationProposal | null;
@@ -190,12 +192,17 @@ export const TabFlightConfirmation: React.FC<TabFlightConfirmationProps> = ({
         {/* Panel Header */}
         <div className="p-4 border-b border-slate-800/80 bg-slate-900/30 flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-sm font-bold text-white tracking-wide flex items-center">
-              <Plane className="w-4 h-4 mr-2 text-sky-400" />
-              Flight Search MCP Options ({preferences.originCity} → {destination.city})
-            </h1>
-            <p className="text-xs text-slate-400">
-              Live airline pricing, cabin baggage policies, and verified arrival slots
+            <div className="flex items-center space-x-2">
+              <span className="text-base">
+                {(getCountryByCountryName(preferences.originCountry || '') || getCountryForOriginCity(preferences.originCity)).flag}
+              </span>
+              <h1 className="text-sm font-bold text-white tracking-wide flex items-center">
+                <Plane className="w-4 h-4 mr-2 text-sky-400" />
+                Flights from {preferences.originCity} ({preferences.originCountry || 'United States'}) → {destination.city}
+              </h1>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Live airline pricing, cabin baggage policies, and verified arrival slots from origin gateway
             </p>
           </div>
 

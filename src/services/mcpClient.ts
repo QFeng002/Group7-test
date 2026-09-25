@@ -192,11 +192,16 @@ export async function discoverDestinations(preferences: TripPreferences): Promis
 }
 
 // 2. Flight Search MCP
-export async function searchFlights(destCode: string, originCity: string): Promise<FlightOption[]> {
+export async function searchFlights(
+  destCode: string,
+  originCity: string,
+  originCountry: string = 'United States'
+): Promise<FlightOption[]> {
   try {
     const response = await runApiTask<{ flights: FlightOption[] }>('search_flights', {
       destinationCode: destCode,
       originCity,
+      originCountry,
     });
     return response.flights;
   } catch {

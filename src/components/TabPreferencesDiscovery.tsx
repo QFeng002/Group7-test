@@ -13,6 +13,9 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
+  Globe,
+  PlaneTakeoff,
+  MapPin,
 } from 'lucide-react';
 import {
   TripPreferences,
@@ -20,6 +23,11 @@ import {
   CurrencyCode,
 } from '../types/travel';
 import { formatPrice } from '../services/localStorageDb';
+import {
+  DEPARTURE_COUNTRIES,
+  getCountryForOriginCity,
+  getCountryByCountryName,
+} from '../services/departureData';
 
 interface TabPreferencesDiscoveryProps {
   preferences: TripPreferences;
@@ -40,17 +48,6 @@ const AVAILABLE_VIBES = [
   { name: 'Art & Museums', icon: '🎨' },
   { name: 'Relaxation & Wellness', icon: '♨️' },
   { name: 'Adventure & Thrills', icon: '🌋' },
-];
-
-const ORIGIN_CITIES = [
-  'San Francisco (SFO)',
-  'New York (JFK)',
-  'London (LHR)',
-  'Singapore (SIN)',
-  'Tokyo (HND)',
-  'Sydney (SYD)',
-  'Vancouver (YVR)',
-  'Frankfurt (FRA)',
 ];
 
 export const TabPreferencesDiscovery: React.FC<TabPreferencesDiscoveryProps> = ({
@@ -97,23 +94,120 @@ export const TabPreferencesDiscovery: React.FC<TabPreferencesDiscoveryProps> = (
 
         {/* Localized vertical scrolling container */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pr-3 custom-scrollbar text-xs">
-          {/* Origin City */}
-          <div>
-            <label className="text-slate-300 font-medium block mb-1.5 flex items-center">
-              <Search className="w-3.5 h-3.5 mr-1 text-slate-400" />
-              Departure Airport / Origin
-            </label>
-            <select
-              value={preferences.originCity}
-              onChange={(e) => onUpdatePreferences({ originCity: e.target.value })}
-              className="w-full bg-slate-800/80 border border-slate-700/80 rounded-md px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500 transition"
-            >
-              {ORIGIN_CITIES.map((city) => (
-                <option key={city} value={city} className="bg-slate-900">
-                  {city}
-                </option>
-              ))}
-            </select>
+          {/* Departure Origin by Country System */}
+          <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-750 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-slate-200 font-semibold flex items-center">
+                <Globe className="w-3.5 h-3.5 mr-1.5 text-sky-400" />
+                Departure Origin by Country
+              </label>
+              <span className="text-[10px] text-sky-400 font-mono">Flight MCP Gateway</span>
+            </div>
+
+            {/* Quick Country Switcher Chips */}
+            <div>
+              <span className="text-[10px] text-slate-400 block mb-1">Quick Select Country:</span>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { country: 'United States', short: '🇺🇸 US' },
+                  { country: 'United Kingdom', short: '🇬🇧 UK' },
+                  { country: 'Canada', short: '🇨🇦 Canada' },
+                  { country: 'Australia', short: '🇦🇺 Australia' },
+                  { country: 'Singapore', short: '🇸🇬 Singapore' },
+                  { country: 'Japan', short: '🇯🇵 Japan' },
+                  { country: 'Germany', short: '🇩🇪 Germany' },
+                  { country: 'France', short: '🇫🇷 France' },
+                  { country: 'United Arab Emirates', short: '🇦🇪 UAE' },
+                ].map((item) => {
+                  const isCurrent = (preferences.originCountry || '').toLowerCase() === item.country.toLowerCase();
+                  return (
+                    <button
+                      key={item.country}
+                      type="button"
+                      onClick={() => {
+                        const targetCountry = getCountryByCountryName(item.country);
+                        if (targetCountry && targetCountry.hubs.length > 0) {
+                          onUpdatePreferences({
+                            originCountry: targetCountry.country,
+                            originCity: targetCountry.hubs[0].displayName,
+                          });
+                        }
+                      }}
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer border ${
+                        isCurrent
+                          ? 'bg-sky-500/25 text-sky-300 border-sky-500/60 shadow-xs'
+                          : 'bg-slate-800/70 text-slate-400 border-slate-700/60 hover:text-slate-200 hover:bg-slate-800'
+                      }`}
+                    >
+                      {item.short}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Country Selector */}
+            <div>
+              <label className="text-slate-300 text-[11px] font-medium block mb-1">
+                Departure Country
+              </label>
+              <select
+                value={preferences.originCountry || getCountryForOriginCity(preferences.originCity).country}
+                onChange={(e) => {
+                  const selectedC = getCountryByCountryName(e.target.value);
+                  if (selectedC && selectedC.hubs.length > 0) {
+                    onUpdatePreferences({
+                      originCountry: selectedC.country,
+                      originCity: selectedC.hubs[0].displayName,
+                    });
+                  }
+                }}
+                className="w-full bg-slate-850 border border-slate-700 rounded-md px-3 py-1.5 text-slate-200 focus:outline-none focus:border-sky-500 transition cursor-pointer"
+              >
+                {DEPARTURE_COUNTRIES.map((c) => (
+                  <option key={c.country} value={c.country} className="bg-slate-900 text-slate-200">
+                    {c.flag} {c.country} ({c.region})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Airport / Gateway Hub Selector */}
+            <div>
+              <label className="text-slate-300 text-[11px] font-medium block mb-1 flex items-center justify-between">
+                <span className="flex items-center">
+                  <PlaneTakeoff className="w-3 h-3 mr-1 text-sky-400" />
+                  Origin Gateway Airport / Hub
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {(getCountryByCountryName(preferences.originCountry || '') || getCountryForOriginCity(preferences.originCity)).hubs.length} hub(s)
+                </span>
+              </label>
+              <select
+                value={preferences.originCity}
+                onChange={(e) => onUpdatePreferences({ originCity: e.target.value })}
+                className="w-full bg-slate-850 border border-slate-700 rounded-md px-3 py-1.5 text-slate-200 focus:outline-none focus:border-sky-500 transition cursor-pointer"
+              >
+                {(getCountryByCountryName(preferences.originCountry || '') || getCountryForOriginCity(preferences.originCity)).hubs.map((hub) => (
+                  <option key={hub.code} value={hub.displayName} className="bg-slate-900 text-slate-200">
+                    {hub.city} ({hub.code}) — {hub.airportName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Active Route Summary Badge */}
+            <div className="px-2.5 py-1.5 rounded-lg bg-sky-950/40 border border-sky-800/40 text-[11px] text-sky-200 flex items-center space-x-2">
+              <span className="text-sm">
+                {(getCountryByCountryName(preferences.originCountry || '') || getCountryForOriginCity(preferences.originCity)).flag}
+              </span>
+              <div className="min-w-0 flex-1 truncate">
+                <span className="text-slate-400 text-[10px] block leading-tight">Current Departure Hub:</span>
+                <span className="font-semibold text-white truncate block">
+                  {preferences.originCity} • {preferences.originCountry || 'United States'}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Budget */}

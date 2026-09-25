@@ -67,7 +67,7 @@ export default function App() {
       discoverDestinations(saved.preferences).then((dests) => {
         setDestinations(dests);
         if (saved.selectedDestination) {
-          searchFlights(saved.selectedDestination.code, saved.preferences.originCity).then(setFlights);
+          searchFlights(saved.selectedDestination.code, saved.preferences.originCity, saved.preferences.originCountry).then(setFlights);
         }
       });
     } else {
@@ -79,7 +79,7 @@ export default function App() {
           const defaultDest = dests[0];
           if (defaultDest) {
             setSelectedDestination(defaultDest);
-            const foundFlights = await searchFlights(defaultDest.code, DEFAULT_PREFERENCES.originCity);
+            const foundFlights = await searchFlights(defaultDest.code, DEFAULT_PREFERENCES.originCity, DEFAULT_PREFERENCES.originCountry);
             setFlights(foundFlights);
             if (foundFlights.length > 0) {
               setSelectedFlight(foundFlights[0]);
@@ -115,10 +115,19 @@ export default function App() {
     }
   }, [preferences, selectedDestination, selectedFlight, itinerary, bookings]);
 
-  // Handler: Update preferences & trigger re-ranking
+  // Handler: Update preferences & trigger re-ranking and flight update
   const handleUpdatePreferences = (updated: Partial<TripPreferences>) => {
     const newPrefs = { ...preferences, ...updated };
     setPreferences(newPrefs);
+
+    if ((updated.originCity || updated.originCountry) && selectedDestination) {
+      searchFlights(selectedDestination.code, newPrefs.originCity, newPrefs.originCountry).then((foundFlights) => {
+        setFlights(foundFlights);
+        if (foundFlights.length > 0) {
+          setSelectedFlight(foundFlights[0]);
+        }
+      });
+    }
   };
 
   // Handler: Refresh destination proposals
@@ -138,7 +147,7 @@ export default function App() {
   const handleSelectDestination = async (dest: DestinationProposal) => {
     setSelectedDestination(dest);
     try {
-      const foundFlights = await searchFlights(dest.code, preferences.originCity);
+      const foundFlights = await searchFlights(dest.code, preferences.originCity, preferences.originCountry);
       setFlights(foundFlights);
       if (foundFlights.length > 0) {
         setSelectedFlight(foundFlights[0]);

@@ -6,6 +6,7 @@ export interface TripPreferences {
   startDate: string;
   endDate: string;
   partySize: number;
+  originCountry: string;
   originCity: string;
   vibes: string[];
 }
