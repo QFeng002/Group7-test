@@ -1,0 +1,6 @@
+{
+  "name": "WanderPulse - MCP Travel Orchestrator",
+  "description": "Interactive non-scrolling workspace for intelligent travel planning, real-time Smithery AI MCP server orchestration, dynamic itinerary building, and wet-weather contingency auto-replanning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
